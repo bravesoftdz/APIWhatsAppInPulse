@@ -9,26 +9,14 @@ uses
   System.JSON,
   REST.Json,
   Horse.Commons,
-  UConexao in 'Model\UConexao.pas';
+  UConexao in 'Model\UConexao.pas',
+  UMensagem in 'Controller\UMensagem.pas';
 
 begin
-  THorse.Get('/xx',
+  THorse.Get('/mensagens',
     procedure(Req: THorseRequest; Res: THorseResponse; Next: TProc)
     begin
-      //
+    //
     end);
-
-  THorse.Get('/api/xxx',
-    procedure(Req: THorseRequest; Res: THorseResponse; Next: TProc)
-    begin
-      //
-    end);
-
-  THorse.Post('/api/xxx',
-    procedure(Req: THorseRequest; Res: THorseResponse; Next: TProc)
-    begin
-      //
-    end);
-
   THorse.Listen(9001);
 end.
