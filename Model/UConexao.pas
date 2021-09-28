@@ -6,11 +6,19 @@ uses
   System.SysUtils, System.Classes, FireDAC.Stan.Intf, FireDAC.Stan.Option,
   FireDAC.Stan.Error, FireDAC.UI.Intf, FireDAC.Phys.Intf, FireDAC.Stan.Def,
   FireDAC.Stan.Pool, FireDAC.Stan.Async, FireDAC.Phys, FireDAC.VCLUI.Wait,
-  Data.DB, FireDAC.Comp.Client, IniFiles, Vcl.Forms, FireDAC.Phys.PG;
+  Data.DB, FireDAC.Comp.Client, IniFiles, Vcl.Forms, FireDAC.Phys.MySQL;
 
 type
+  TConexaoBDWhatsApp = class
+  public
+    FConexao : TFDConnection;
+    function Connection: TFDConnection;
 
-  TConexaoFD = class
+    constructor Create;
+	  destructor Destroy; override;
+  end;
+
+  TConexaoBDInpulse = class
   public
     FConexao : TFDConnection;
     function Connection: TFDConnection;
@@ -21,34 +29,36 @@ type
 
   TDBConfINI = class
 	private
-		fHostName: String;
-		fDataBase: String;
-		fPorta: String;
+		fHostNameWhats: String;
+    fHostNameInPulse: String;
+		fDataBaseWhats: String;
+    fDataBaseInPulse: String;
+		fPortaWhats: String;
+    fPortaInPulse: String;
 		fUserName: String;
 	public
 		constructor Create;
 		procedure LeArquivo;
-		property HostName: String read fHostName;
-		property DataBase: String read fDataBase;
-		property Porta: String read fPorta;
+
+		property HostNameWhats: String read fHostNameWhats;
+    property HostNameInPulse: String read fHostNameInPulse;
+		property DataBaseWhatsApp: String read fDataBaseWhats;
+    property DataBaseInPulse: String read fDataBaseInPulse;
+		property PortaWhatsApp: String read fPortaWhats;
+    property PortaInPulse: String read fPortaInPulse;
 		property UserName: String read fUserName;
 	end;
-
-  TCriarConexao = class
-  public
-    procedure CriarConexao;
-  end;
 
 implementation
 
 { TConexaoFD }
 
-function TConexaoFD.Connection: TFDConnection;
+function TConexaoBDInpulse.Connection: TFDConnection;
 begin
   Result := FConexao;
 end;
 
-constructor TConexaoFD.Create;
+constructor TConexaoBDInpulse.Create;
 var
   lDBConfINI: TDBConfINI;
 begin
@@ -61,9 +71,9 @@ begin
 
         FConexao.Connected := False;
         FConexao.Params.Values['DriverID'] := 'MySQL';
-        FConexao.Params.Values['Server'] := lDBConfINI.fHostName;
-        FConexao.Params.Values['Port'] := lDBConfINI.fPorta;
-        FConexao.Params.Values['Database'] := lDBConfINI.fDataBase;
+        FConexao.Params.Values['Server'] := lDBConfINI.fHostNameInPulse;
+        FConexao.Params.Values['Port'] := lDBConfINI.fPortaInPulse;
+        FConexao.Params.Values['Database'] := lDBConfINI.fDataBaseInPulse;
         FConexao.Params.Values['User_name'] := lDBConfINI.fUserName;
         FConexao.Params.Values['Password'] := 'fat0516fat';
         FConexao.Connected := True;
@@ -77,11 +87,12 @@ begin
   end;
 end;
 
-destructor TConexaoFD.Destroy;
+destructor TConexaoBDInpulse.Destroy;
 begin
-   FreeAndNil(FConexao);
+  if Assigned(FConexao) then
+    FreeAndNil(FConexao);
 
-   inherited;
+   inherited Destroy;
 end;
 
 { TDBConfINI }
@@ -97,9 +108,9 @@ var
 	lExiste: Boolean;
 	lCaminhoIni: String;
 	lIni: TInifile;
-	S: String;
+	lValor: String;
 begin
-	lCaminhoIni := ExtractFilePath(Application.ExeName) + 'ConfTInject.ini';
+	lCaminhoIni := ExtractFilePath(Application.ExeName) + 'dbconf.ini';
 	lExiste := FileExists(lCaminhoIni);
 
 	if not lExiste then
@@ -112,28 +123,76 @@ begin
 
 	lIni := TInifile.Create(lCaminhoIni);
 	try
-		S := lIni.ReadString('hostname', 'hostname', '');
-		if (S <> '') then
-			fHostName := S;
-		S := lIni.ReadString('database', 'database', '');
-		if (S <> '') then
-			fDataBase := S;
-		S := lIni.ReadString('porta', 'porta', '');
-		if (S <> '') then
-			fPorta := S;
-		S := lIni.ReadString('USUARIO', 'username', '');
-		if (S <> '') then
-			fUserName := S;
+		lValor := lIni.ReadString('hostname', 'hostnameinpulse', '');
+		if (lValor <> '') then
+			fHostNameInPulse := lValor;
+    lValor := lIni.ReadString('hostname', 'hostnamewhats', '');
+		if (lValor <> '') then
+			fHostNameWhats := lValor;
+
+		lValor := lIni.ReadString('database', 'databaseinpulse', '');
+		if (lValor <> '') then
+			fDataBaseInPulse := lValor;
+    lValor := lIni.ReadString('database', 'databasewhats', '');
+		if (lValor <> '') then
+			fDataBaseWhats := lValor;
+
+		lValor := lIni.ReadString('porta', 'portainpulse', '');
+		if (lValor <> '') then
+			fPortaInPulse := lValor;
+    lValor := lIni.ReadString('porta', 'portawhats', '');
+		if (lValor <> '') then
+			fPortaWhats := lValor;
+
+		lValor := lIni.ReadString('USUARIO', 'username', '');
+		if (lValor <> '') then
+			fUserName := lValor;
 	finally
 		lIni.Free;
 	end;
 end;
 
-{ TCriarConexao }
+{ TConexaoBDWhatsApp }
 
-procedure TCriarConexao.CriarConexao;
+function TConexaoBDWhatsApp.Connection: TFDConnection;
 begin
+  Result := FConexao;
+end;
 
+constructor TConexaoBDWhatsApp.Create;
+var
+  lDBConfINI: TDBConfINI;
+begin
+	lDBConfINI := TDBConfINI.Create;
+  try
+    if (Assigned(lDBConfINI)) then
+    begin
+      try
+        FConexao := TFDConnection.Create(nil);
+
+        FConexao.Connected := False;
+        FConexao.Params.Values['DriverID'] := 'MySQL';
+        FConexao.Params.Values['Server'] := lDBConfINI.fHostNameWhats;
+        FConexao.Params.Values['Port'] := lDBConfINI.fPortaWhats;
+        FConexao.Params.Values['Database'] := lDBConfINI.fDataBaseWhats;
+        FConexao.Params.Values['User_name'] := lDBConfINI.fUserName;
+        FConexao.Params.Values['Password'] := 'fat0516fat';
+        FConexao.Connected := True;
+
+      except on E:Exception do
+        raise Exception.Create(E.Message);
+      end;
+    end;
+  finally
+    lDBConfINI.Free;
+  end;
+end;
+
+destructor TConexaoBDWhatsApp.Destroy;
+begin
+  FreeAndNil(FConexao);
+
+  inherited;
 end;
 
 end.
